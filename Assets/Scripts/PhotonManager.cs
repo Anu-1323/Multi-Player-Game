@@ -20,15 +20,23 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public GameObject roomListPrefab;
     public GameObject roomListParent;
 
-    private Dictionary<string, RoomInfo> roomListData;
+
+    public Button roomList;
+
+    private Dictionary<string, RoomInfo> roomListData = new Dictionary<string, RoomInfo>();
     private Dictionary<string, GameObject> roomListGameObject;
 
     #region UnityMehtods
+    private void Awake()
+    {
+        
+    }
     void Start()
     {
         ActivatePanel(playerNamePanel.name);
-        roomListData = new Dictionary<string, RoomInfo>();
+       
         roomListGameObject = new Dictionary<string, GameObject>();
+        roomList.onClick.AddListener(RoomListBtn);
     }
 
     void Update()
@@ -74,13 +82,24 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         ActivatePanel(lobbyPanel.name);
     }
 
-    public void RoomListBtn()
+   /* public void RoomListBtnClicked()
     {
-        if (PhotonNetwork.InLobby)
+        if(!PhotonNetwork.InLobby)
         {
             PhotonNetwork.JoinLobby();
         }
         ActivatePanel(roomListPanel.name);
+    }*/
+
+    public void RoomListBtn()
+    {
+            PhotonNetwork.JoinLobby();
+       /* if (!PhotonNetwork.InLobby)
+        {
+            Debug.Log("Joined lobby");
+        }
+        Debug.Log("In lobby lobby");*/
+        
     }
 
     #endregion
@@ -110,12 +129,17 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
-        ClearRoomList();
 
+        //  clearRoom();
+        Debug.Log("1" + roomList.Count);
+       foreach(var s in roomList)
+        {
+            Debug.Log(s);
+        }
         foreach (RoomInfo rooms in roomList)
         {
-            Debug.Log("Room Name:" + rooms.Name);
-
+            Debug.Log("2");
+            Debug.Log("Room name : " + rooms.Name);
             if (!rooms.IsOpen || !rooms.IsVisible || rooms.RemovedFromList)
             {
                 if (roomListData.ContainsKey(rooms.Name))
@@ -138,15 +162,20 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
         foreach (RoomInfo roomItem in roomListData.Values)
         {
-            GameObject roomListItemObject = Instantiate(roomListPrefab);
-            Debug.Log("prefab instatiate sucess");
-            roomListItemObject.transform.SetParent(roomListParent.transform);
-            roomListItemObject.transform.localScale = Vector3.one;
-            roomListItemObject.transform.GetChild(0).gameObject.GetComponent<TMP_Text>().text = roomItem.Name;
-            roomListItemObject.transform.GetChild(1).gameObject.GetComponent<TMP_Text>().text = roomItem.PlayerCount + "/" + roomItem.MaxPlayers;
-            roomListItemObject.transform.GetChild(2).gameObject.GetComponent<Button>().onClick.AddListener(() => RoomJoinFromList(roomItem.Name));
-            roomListGameObject.Add(roomItem.Name, roomListItemObject);
+            Debug.Log("Room exist: " + roomItem.Name);
+            GameObject item = Instantiate(roomListPrefab, roomListParent.transform);
+            item.transform.localScale = Vector3.one;
+            item.transform.GetChild(0).GetComponent<TMP_Text>().text = roomItem.Name;
+            item.transform.GetChild(1).GetComponent<TMP_Text>().text = roomItem.PlayerCount + "/" + roomItem.MaxPlayers;
+            item.transform.GetChild(2).GetComponent<Button>().onClick.AddListener(delegate { RoomJoinFromList(roomItem.Name); });
+           // roomlistGameobject.Add(roomItem.Name, item);
+
         }
+    }
+    public override void OnJoinedLobby()
+    {
+        Debug.Log("Lohh");
+        ActivatePanel(roomListPanel.name);
     }
 
     #endregion
@@ -164,6 +193,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public void ClearRoomList()
     {
+        Debug.Log("Cleared");
         if (roomListGameObject.Count>0)
         {
             foreach (var v in roomListGameObject.Values)
